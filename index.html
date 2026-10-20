@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Racing Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: #162447;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        /* Track Design */
+        .track {
+            height: 100px;
+            background: #1f4068;
+            position: relative;
+            margin: 20px 0;
+            border-bottom: 4px dashed #fff;
+            border-top: 4px solid #fff;
+            overflow: hidden;
+        }
+        .finish-line {
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            width: 15px;
+            background: repeating-linear-gradient(45deg, #fff, #fff 5px, #000 5px, #000 10px);
+        }
+        .car {
+            font-size: 30px;
+            position: absolute;
+            left: 10px;
+            top: 30px;
+            transition: left 0.1s linear;
+        }
+        /* Typing Area */
+        .text-display {
+            font-size: 20px;
+            margin: 20px 0;
+            line-height: 1.5;
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 5px;
+            letter-spacing: 1px;
+            text-align: left;
+        }
+        .correct { color: #4e9f3d; font-weight: bold; background: none; }
+        .incorrect { color: #d9455f; background: rgba(217,69,95,0.3); border-radius: 2px; }
+        .input-box {
+            width: 90%;
+            padding: 12px;
+            font-size: 18px;
+            border: 2px solid #e94560;
+            border-radius: 5px;
+            background: #1a1a2e;
+            color: #fff;
+            outline: none;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #e94560;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover { background: #ff4a6e; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>TypeRacer Clone - Single Player</h2>
+    
+    <div class="track">
+        <div class="car" id="playerCar">🚗</div>
+        <div class="finish-line"></div>
+    </div>
+
+    <div class="text-display" id="textDisplay">गेम शुरू करने के लिए नीचे दिए गए बटन पर क्लिक करें...</div>
+    <input type="text" class="input-box" id="inputBox" placeholder="यहाँ टाइप करना शुरू करें..." disabled>
+    
+    <div class="stats">
+        <div>WPM: <span id="wpm">0</span></div>
+        <div>Accuracy: <span id="accuracy">100</span>%</div>
+    </div>
+    
+    <button id="startBtn">गेम शुरू करें</button>
+</div>
+
+<script>
+    const textQuotes = [
+        "Earth is the third planet from the sun. It is the only planet known to harbor life.",
+        "Practice makes a man perfect. Typing fast requires focus, accuracy, and daily discipline.",
+        "JavaScript is a versatile programming language used widely for building interactive websites."
+    ];
+
+    let currentQuote = "";
+    let startTime;
+    let isPlaying = false;
+
+    const textDisplay = document.getElementById("textDisplay");
+    const inputBox = document.getElementById("inputBox");
+    const playerCar = document.getElementById("playerCar");
+    const wpmDisplay = document.getElementById("wpm");
+    const accuracyDisplay = document.getElementById("accuracy");
+    const startBtn = document.getElementById("startBtn");
+
+    // गेम शुरू करने का फंक्शन
+    startBtn.addEventListener("click", () => {
+        currentQuote = textQuotes[Math.floor(Math.random() * textQuotes.length)];
+        textDisplay.innerHTML = currentQuote.split("").map(char => `<span>${char}</span>`).join("");
+        
+        inputBox.value = "";
+        inputBox.disabled = false;
+        inputBox.focus();
+        
+        playerCar.style.left = "10px";
+        wpmDisplay.innerText = "0";
+        accuracyDisplay.innerText = "100";
+        
+        startTime = new Date();
+        isPlaying = true;
+        startBtn.innerText = "रिस्टार्ट करें";
+    });
+
+    // टाइपिंग इनपुट चेक करने का लॉजिक
+    inputBox.addEventListener("input", () => {
+        if (!isPlaying) return;
+
+        const quoteChars = textDisplay.querySelectorAll("span");
+        const userInputValue = inputBox.value;
+        let correctCount = 0;
+        let totalTyped = userInputValue.length;
+
+        quoteChars.forEach((charSpan, index) => {
+            const userChar = userInputValue[index];
+            if (userChar == null) {
+                charSpan.className = "";
+            } else if (userChar === charSpan.innerText) {
+                charSpan.className = "correct";
+                correctCount++;
+            } else {
+                charSpan.className = "incorrect";
+            }
+        });
+
+        // गाड़ी को आगे बढ़ाना (प्रोग्रेस के हिसाब से)
+        let progress = (userInputValue.length / currentQuote.length) * 85; // 85% ट्रैक कवर करने के लिए
+        playerCar.style.left = `calc(${progress}% + 10px)`;
+
+        // लाइव एक्यूरेसी और WPM कैलकुलेशन
+        if (totalTyped > 0) {
+            let accuracy = Math.round((correctCount / totalTyped) * 100);
+            accuracyDisplay.innerText = accuracy;
+        }
+
+        let timePassed = (new Date() - startTime) / 60000; // मिनटों में समय
+        if (timePassed > 0) {
+            let wpm = Math.round((userInputValue.split(" ").length) / timePassed);
+            wpmDisplay.innerText = wpm >= 0 ? wpm : 0;
+        }
+
+        // गेम खत्म होने पर चेक
+        if (userInputValue === currentQuote) {
+            isPlaying = false;
+            inputBox.disabled = true;
+            startBtn.innerText = "फिर से खेलें";
+            alert("बधाई हो! आपने गेम पूरा कर लिया है। 🎉");
+        }
+    });
+</script>
+
+</body>
+</html>
